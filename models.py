@@ -1,8 +1,4 @@
-from flask_sqlalchemy import SQLAlchemy
-from flask_security import SQLAlchemyUserDatastore, Security
-from flask_security.models import fsqla_v3 as fsqla
-
-db = SQLAlchemy()
+from database import db
 
 
 class Product(db.Model):
@@ -69,8 +65,13 @@ class User(db.Model):
     password = db.Column(db.String(255))
     active = db.Column(db.Boolean())
     confirmed_at = db.Column(db.DateTime())
-    fs_uniquifier = db.Column(db.String(255), unique=True, nullable=False)
-    roles = db.relationship('Role', secondary=roles_users, backref=db.backref('users', lazy='dynamic'))
+    fs_uniquifier = db.Column(db.String(255),
+                              unique=True,
+                              nullable=False)
+    roles = db.relationship('Role',
+                            secondary=roles_users,
+                            backref=db.backref('users', lazy='dynamic'))
+
 
 class UserRoles(db.Model):
     id = db.Column(db.Integer, primary_key=True)

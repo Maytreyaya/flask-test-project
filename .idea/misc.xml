@@ -3,5 +3,5 @@
   <component name="Black">
     <option name="sdkName" value="Python 3.11 (flaskProjecttest)" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.11 (flaskProjecttest)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.11 (flask-test-project)" project-jdk-type="Python SDK" />
 </project>
