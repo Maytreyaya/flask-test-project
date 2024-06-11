@@ -9,19 +9,20 @@ from auth import auth_bp
 from database import db
 from jsonprc_methods import jsonrpc_bp
 from admin import setup_admin
+from flask_babel import Babel
 
 app = Flask('application')
 app.config.from_object(Config)
 jwt = JWTManager(app)
+babel = Babel(app, 'ru')
 
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(jsonrpc_bp, url_prefix='/jsonrpc')
 
 setup_admin(app)
 
-celery = Celery(app.name, broker_url='redis://localhost:6379/0',include=["tasks"])
+celery = Celery(app.name, broker_url='redis://localhost:6379/0')
 celery.config_from_object('config')
-
 
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -30,5 +31,5 @@ security = Security(app, user_datastore)
 
 if __name__ == '__main__':
 
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0', debug=True, use_reloader=False)
     celery.start()

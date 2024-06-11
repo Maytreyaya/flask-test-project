@@ -1,12 +1,14 @@
 from flask import request, jsonify, Blueprint
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
-from flask_security import verify_password, hash_password, SQLAlchemyUserDatastore
+from flask_security.utils import verify_password, hash_password
+from flask_security import SQLAlchemyUserDatastore
 from models import Role, User
 from database import db
 
 auth_bp = Blueprint('auth', __name__)
 
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
+
 
 @auth_bp.route('/register', methods=['POST'])
 def register():

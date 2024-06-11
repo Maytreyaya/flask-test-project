@@ -19,29 +19,34 @@ def admin_required(func):
     def decorated_function(*args, **kwargs):
         current_user_id = get_jwt_identity()
         current_user = User.query.get(current_user_id)
-        if 'adminn' not in current_user.roles:
+        if 'admin' not in current_user.roles:
             return jsonify(error="Permission denied"), 403
         return func(*args, **kwargs)
     return decorated_function
 
 
 @method
-def get_products():
+def get_products() -> list[dict]:
     products = Product.query.all()
     return Success([product.as_dict() for product in products])
 
 
 @method
-def get_product(product_id):
+def get_product(product_id: int) -> dict:
     product = Product.query.get(product_id)
     if product:
         return Success(product.as_dict())
     else:
-        return Error("Product not found")
+        return Error("Product not found", code="0432")
 
 
 @method
-def create_product(name, price, weight, color):
+@jwt_required()
+def create_product(name: str,
+                   price: float,
+                   weight: float,
+                   color: str) -> dict:
+
     product = Product(name=name,
                       price=price,
                       weight=weight,
@@ -52,8 +57,11 @@ def create_product(name, price, weight, color):
 
 
 @method
+@jwt_required()
 @admin_required
-def update_product(product_id, name=None, price=None):
+def update_product(product_id: int,
+                   name: str = None,
+                   price: float = None) -> dict:
     product = Product.query.get(product_id)
     if product:
         if name is not None:
@@ -63,36 +71,46 @@ def update_product(product_id, name=None, price=None):
         db.session.commit()
         return Success(product.as_dict())
     else:
-        return Error("Product not found")
+        return Error("Product not found", code="0432")
 
 
 @method
+@jwt_required()
 @admin_required
-def delete_product(product_id):
+def delete_product(product_id: int) -> str:
     product = Product.query.get(product_id)
     if product:
         db.session.delete(product)
         db.session.commit()
         return Success(f"Product {product_id} deleted")
     else:
-        return Error("Product not found")
+        return Error("Product not found", code="0432")
 
 
 @method
-def create_address(country, city, street):
+@jwt_required()
+def create_address(country: str,
+                   city: str,
+                   street: str) -> dict:
+
     address = Address(country=country,
                       city=city,
                       street=street)
+
     db.session.add(address)
     db.session.commit()
     return Success(address.as_dict())
 
 
 @method
-def create_order(address_id, status, order_items):
+@jwt_required()
+def create_order(address_id: int,
+                 status: str,
+                 order_items: list[dict]) -> dict:
+
     address = Address.query.get(address_id)
     if not address:
-        return Error("Address not found")
+        return Error("Address not found", code="0432")
 
     order = Order(address_id=address_id, status=status)
     db.session.add(order)
@@ -117,13 +135,13 @@ def create_order(address_id, status, order_items):
 
 
 @method
-def get_orders():
+def get_orders() -> list[dict]:
     orders = Order.query.all()
     return Success([order.as_dict() for order in orders])
 
 
 @method
-def get_order(order_id):
+def get_order(order_id) -> dict:
     order = Order.query.get(order_id)
     if order:
         return Success(order.as_dict())
@@ -132,10 +150,11 @@ def get_order(order_id):
 
 
 @method
+@jwt_required()
 @admin_required
 @shared_task
-def update_order(order_id, new_status):
-    # current_user_id = get_jwt_identity()
+def update_order(order_id: int, new_status: str) -> str:
+
     order = Order.query.get(order_id)
 
     if not order:
@@ -156,8 +175,9 @@ def update_order(order_id, new_status):
 
 
 @method
+@jwt_required()
 @admin_required
-def delete_order(order_id):
+def delete_order(order_id) -> str:
     order = Order.query.get(order_id)
     if not order:
         return Error("Order not found")
@@ -168,7 +188,8 @@ def delete_order(order_id):
 
 
 @method
-def create_role(name, description):
+@jwt_required()
+def create_role(name: str, description: str) -> dict:
     role = Role(name=name, description=description)
     db.session.add(role)
     db.session.commit()
@@ -176,23 +197,26 @@ def create_role(name, description):
 
 
 @method
-def get_roles():
+def get_roles() -> list[dict]:
     roles = Role.query.all()
     return Success([role.as_dict() for role in roles])
 
 
 @method
-def get_role(role_id):
+def get_role(role_id: int) -> dict:
     role = Role.query.get(role_id)
     if role:
         return Success(role.as_dict())
     else:
-        return Error("Role not found")
+        return Error("Role not found", code="0432")
 
 
 @method
+@jwt_required()
 @admin_required
-def update_role(role_id, name=None, description=None):
+def update_role(role_id: int,
+                name: str = None,
+                description: str = None):
     role = Role.query.get(role_id)
     if role:
         if name is not None:
@@ -202,10 +226,11 @@ def update_role(role_id, name=None, description=None):
         db.session.commit()
         return Success(role.as_dict())
     else:
-        return Error("Role not found")
+        return Error("Role not found", code="0432")
 
 
 @method
+@jwt_required()
 @admin_required
 def delete_role(role_id):
     role = Role.query.get(role_id)
@@ -214,10 +239,10 @@ def delete_role(role_id):
         db.session.commit()
         return Success(f"Role {role_id} deleted")
     else:
-        return Error("Role not found")
+        return Error("Role not found", code="0432")
 
 
-@jwt_required
+@jwt_required()
 @jsonrpc_bp.route('/jsonrpc', methods=['POST'])
 def jsonrpc():
     response = dispatch(request.data)

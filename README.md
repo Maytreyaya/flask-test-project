@@ -6,13 +6,6 @@ git clone https://github.com/Maytreyaya/flask-test-project
 cd flask-test-project
 docker-compose up --build
 
-# inside the conteiner in needed
-    docker-compose exec web flask db init
-    docker-compose exec web flask db migrate
-    docker-compose exec web flask db upgrade
-
-# to upload dump data into mysql db
-mysql -u username -p password database_name < dump_file.sql
 ~~~
 The application uses JWT for authentication. To use methods that require authentication, obtain a JWT token.
 
@@ -21,27 +14,82 @@ The application uses JWT for authentication. To use methods that require authent
 Send a POST request to `/register` first and then `/login`:
 
 ```sh
-curl -X POST http://localhost:5000/register\
+curl -X POST http://localhost:5000/auth/register\
   -H "Content-Type: application/json" \
-  -d '{"email": "your_email@example.com", "password": "your_password", "roles":[]}'
+  -d '{"email": "yo@example.com", "password": "your_password", "roles": "admin"}'
 
 
-curl -X POST http://localhost:5000/login\
+curl -X POST http://localhost:5000/auth/login\
   -H "Content-Type: application/json" \
   -d '{"email": "your_email@example.com", "password": "your_password"}'
 
 ```
 Now you have access JWT Token
-To receive information about order(if it's present in db)
+### To test work of the app and receive information about order
 
 ``` sh
-curl -X POST http://localhost:5000/jsonrpc \
+# create product
+curl -X POST http://localhost:5000/jsonrpc/jsonrpc \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcxODEwNzM0MywianRpIjoiNTMxNWFlMjktMTk1YS00NDQ3LWFhYzEtZTEyNDEwZDFhN2ZhIiwidHlwZSI6ImFjY2VzcyIsInN1
+YiI6NiwibmJmIjoxNzE4MTA3MzQzLCJjc3JmIjoiMjVlMDdmNjQtYmFiNS00NjkzLTlkMzMtMGIzNzZhMWY1NmY2IiwiZXhwIjoxNzE4MTEwOTQzfQ.39rdHQdjNa47zLryvq8jJEtuI4pLWCdQpd78JKO_eQ8""\
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "create_product",
+    "params": {
+        "name": "pupa",
+        "price": "3.0",
+        "weight": "10",
+        "color": "red"
+    },
+    "id": 1
+}'
+
+# create adress
+curl -X POST http://localhost:5000/jsonrpc/jsonrpc \
   -H "Authorization: Bearer <your_jwt_token>" \
   -H "Content-Type: application/json" \
   -d '{
     "jsonrpc": "2.0",
-    "method": "get_order",
-    "params": {"order_id": 1},
+    "method": "create_address",
+    "params": {
+        "country": "Ukr",
+        "city": "Vin",
+        "street": "Sobor"
+    },
     "id": 1
 }'
+
+# create order
+curl -X POST http://localhost:5000/jsonrpc/jsonrpc \
+  -H "Authorization: Bearer <your_jwt_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "create_order",
+    "params": {
+        "order_items": [{
+            "product_id": 1,
+            "quantity": 2
+        }],
+        "address_id": 1,
+        "status": "pending"
+    },
+    "id": 1
+}'
+
+# update order with celery logging
+curl -X POST http://localhost:5000/jsonrpc/jsonrpc \
+  -H "Authorization: Bearer <your_jwt_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "update_order",
+    "params": {
+        "order_id": 1,
+        "new_status": "paid"
+    },
+    "id": 1
+}'
+
 ```
